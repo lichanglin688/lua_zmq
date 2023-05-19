@@ -1,0 +1,100 @@
+$#include "ZmqContext.h"
+$#include "ZmqMessageRouter.h"
+$#include "ZmqPoller.h"
+$#include "ZmqSocket.h"
+$#include "ZmqTimer.h"
+$#include "ZmqMonitor.h"
+
+class ZmqContext 
+{
+	static ZmqContext* getSingleton();
+
+	static void deleteSingleton();
+
+    zmq::context_t *getContext() const;
+
+    void setctxopt(int option, int optval);
+
+    static std::string createUuid();
+};
+
+class ZmqMessageRouter
+{
+    ZmqMessageRouter(ZmqContext *context);
+
+    bool bind(const char*addr);
+
+    void start();
+};
+
+class ZmqPoller
+{
+    ZmqPoller();
+	
+    ~ZmqPoller();
+
+    void add(ZmqSocket* socket, short event = ZMQ_POLLIN);
+
+    int poll(long timeout = -1);
+
+    bool has_in(ZmqSocket* socket);
+};
+
+class ZmqSocket
+{
+public:
+    ZmqSocket(ZmqContext *context, int socket_type);
+
+    ~ZmqSocket();
+
+    bool bind(const char* addr);
+
+    bool connect(const char* addr);
+
+    bool setSockoptInt(int option, int value);
+
+    bool setSockoptString(int option, const char* value);
+
+//lua_xxx中返回值设为1
+    void getSockoptString(lua_State* L, int option);
+
+    int getSockoptInt(int option);
+	
+    bool send(const char* msg, int send_flags = 0);
+
+	bool sendBySize(const char* msg, unsigned int size, int send_flags = 0);
+
+//lua_xxx中返回值设为1
+    void recv(lua_State* L, int recv_flags = 0);
+	
+//lua_xxx中返回值设为1
+    void recvAndWait(lua_State* L, long timeout = -1, int recv_flags = 0);
+	
+//lua_xxx中返回值设为1
+    void recvMultiMessage(lua_State* L, int recv_flags = 0);
+	
+//lua_xxx中返回值设为1
+    void recvMultiMessageAndWait(lua_State* L, long timeout = -1, int recv_flags = 0);
+};
+
+class ZmqTimer : public QObject
+{
+    ZmqTimer(ZmqContext *context, int socket_type);
+
+    ~ZmqTimer();
+
+    void startTimer(int interval, const char*addr);
+};
+
+class ZmqMonitor
+{
+public:
+    ZmqMonitor();
+	
+	~ZmqMonitor();
+
+    ZmqSocket* init(ZmqSocket* socket, const char *address, int events = ZMQ_EVENT_ALL);
+
+//lua_xxx中返回值设为3，分别为事件id，事件关联值，节点字符串
+    void recv(lua_State *L);
+};

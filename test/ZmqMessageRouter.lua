@@ -1,0 +1,5 @@
+require("AresZMQ")
+local ctx = ZmqContext:getSingleton()
+local messageRouter = ZmqMessageRouter:new(ctx)
+messageRouter:bind("tcp://127.0.0.1:5555")
+messageRouter:start()
